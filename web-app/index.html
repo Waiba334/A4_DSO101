@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sépia — Artisan Coffee</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Josefin+Sans:wght@300;400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream:#F5F0E8; --parchment:#EDE5D4; --warm:#D4C5A9;
+      --mocha:#7C5C3E; --espresso:#3D2B1F; --ink:#1A1209;
+      --rust:#A0522D; --gold:#C8A96E;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family:'Josefin Sans',sans-serif; background:var(--cream); color:var(--espresso); cursor:none; overflow-x:hidden; }
+    body::after { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23g)' opacity='0.055'/%3E%3C/svg%3E"); pointer-events:none; z-index:1000; }
+
+    .cursor { position:fixed; width:10px; height:10px; background:var(--mocha); border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%,-50%); transition:width .3s,height .3s,background .3s; }
+    .cursor-ring { position:fixed; width:38px; height:38px; border:1px solid var(--mocha); border-radius:50%; pointer-events:none; z-index:9998; transform:translate(-50%,-50%); transition:width .3s,height .3s; opacity:.5; }
+
+    nav { position:fixed; top:0; left:0; right:0; z-index:500; display:flex; align-items:center; justify-content:space-between; padding:2rem 4rem; mix-blend-mode:multiply; }
+    .nav-logo { font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:600; letter-spacing:.08em; color:var(--espresso); text-decoration:none; }
+    .nav-logo span { font-style:italic; color:var(--rust); }
+    .nav-links { display:flex; gap:2.5rem; list-style:none; }
+    .nav-links a { font-size:.7rem; letter-spacing:.2em; text-transform:uppercase; color:var(--mocha); text-decoration:none; position:relative; transition:color .3s; }
+    .nav-links a::after { content:''; position:absolute; bottom:-3px; left:0; right:0; height:1px; background:var(--rust); transform:scaleX(0); transform-origin:left; transition:transform .3s ease; }
+    .nav-links a:hover { color:var(--rust); }
+    .nav-links a:hover::after { transform:scaleX(1); }
+
+    .hero { min-height:100vh; display:grid; grid-template-columns:1fr 1fr; position:relative; overflow:hidden; }
+    .hero-left { display:flex; flex-direction:column; justify-content:center; padding:10rem 5rem 6rem 4rem; position:relative; z-index:2; }
+    .hero-label { font-size:.65rem; letter-spacing:.3em; text-transform:uppercase; color:var(--gold); margin-bottom:2rem; animation:fadeLeft .9s ease both; }
+    .hero h1 { font-family:'Cormorant Garamond',serif; font-size:clamp(4rem,6vw,7rem); font-weight:300; line-height:.95; letter-spacing:-.02em; color:var(--ink); margin-bottom:2rem; animation:fadeLeft .9s .1s ease both; }
+    .hero h1 em { font-style:italic; color:var(--rust); display:block; }
+    .hero-desc { font-size:.78rem; letter-spacing:.1em; line-height:2; color:var(--mocha); max-width:340px; margin-bottom:3rem; animation:fadeLeft .9s .2s ease both; }
+    .hero-cta { display:flex; gap:1.25rem; align-items:center; animation:fadeLeft .9s .3s ease both; }
+    .btn-filled { display:inline-block; background:var(--espresso); color:var(--cream); font-family:'Josefin Sans',sans-serif; font-size:.65rem; letter-spacing:.22em; text-transform:uppercase; text-decoration:none; padding:1rem 2.25rem; transition:background .3s,transform .3s; }
+    .btn-filled:hover { background:var(--rust); transform:translateY(-2px); }
+    .btn-text { font-size:.65rem; letter-spacing:.18em; text-transform:uppercase; color:var(--mocha); text-decoration:none; display:flex; align-items:center; gap:.6rem; transition:color .3s; }
+    .btn-text::before { content:''; width:28px; height:1px; background:currentColor; transition:width .3s; }
+    .btn-text:hover { color:var(--rust); }
+    .btn-text:hover::before { width:44px; }
+
+    .hero-right { position:relative; background:var(--parchment); overflow:hidden; animation:fadeRight 1s .2s ease both; }
+    .hero-art { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+    .hero-art svg { width:75%; height:75%; opacity:.9; }
+    .hero-year { position:absolute; bottom:3rem; right:3.5rem; font-family:'Cormorant Garamond',serif; font-size:6rem; font-weight:300; color:var(--warm); line-height:1; user-select:none; }
+
+    .marquee-strip { background:var(--espresso); color:var(--cream); padding:1rem 0; overflow:hidden; white-space:nowrap; position:relative; z-index:2; }
+    .marquee-inner { display:inline-flex; animation:marquee 22s linear infinite; }
+    .marquee-inner span { font-size:.65rem; letter-spacing:.25em; text-transform:uppercase; padding:0 3rem; opacity:.7; }
+    .marquee-inner .sep { color:var(--gold); opacity:1; padding:0; }
+    @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+    .story { display:grid; grid-template-columns:1fr 1.4fr; min-height:80vh; }
+    .story-left { background:var(--parchment); position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+    .story-pattern { position:absolute; inset:0; background-image:radial-gradient(circle at 30% 30%,rgba(168,122,64,.08) 0%,transparent 50%),radial-gradient(circle at 70% 70%,rgba(160,82,45,.06) 0%,transparent 50%); }
+    .story-circle { width:340px; height:340px; border-radius:50%; border:1px solid var(--warm); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; position:relative; z-index:2; padding:3rem; }
+    .story-circle::before { content:''; position:absolute; inset:12px; border-radius:50%; border:1px solid var(--warm); }
+    .story-num { font-family:'Cormorant Garamond',serif; font-size:5rem; font-weight:300; color:var(--gold); line-height:1; }
+    .story-num-label { font-size:.6rem; letter-spacing:.25em; text-transform:uppercase; color:var(--mocha); margin-top:.5rem; }
+    .story-right { padding:6rem 5rem 6rem 4rem; display:flex; flex-direction:column; justify-content:center; }
+    .section-tag { font-size:.62rem; letter-spacing:.28em; text-transform:uppercase; color:var(--gold); margin-bottom:1.5rem; }
+    .story-right h2 { font-family:'Cormorant Garamond',serif; font-size:clamp(2.5rem,4vw,4rem); font-weight:300; line-height:1.1; letter-spacing:-.01em; color:var(--ink); margin-bottom:2rem; }
+    .story-right h2 em { font-style:italic; color:var(--rust); }
+    .story-right p { font-size:.8rem; letter-spacing:.06em; line-height:2.1; color:var(--mocha); margin-bottom:1.5rem; max-width:480px; }
+    .divider { width:48px; height:1px; background:var(--gold); margin:2rem 0; }
+    .story-stats { display:flex; gap:3rem; margin-top:1rem; }
+    .stat-num { font-family:'Cormorant Garamond',serif; font-size:2.8rem; font-weight:300; color:var(--espresso); line-height:1; }
+    .stat-label { font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--mocha); margin-top:.4rem; }
+
+    .menu-section { background:var(--espresso); padding:7rem 4rem; position:relative; overflow:hidden; }
+    .menu-section::before { content:'MENU'; position:absolute; font-family:'Cormorant Garamond',serif; font-size:20rem; font-weight:300; color:rgba(255,255,255,.03); top:50%; left:50%; transform:translate(-50%,-50%); white-space:nowrap; pointer-events:none; letter-spacing:.1em; }
+    .menu-header { text-align:center; margin-bottom:5rem; }
+    .menu-header .section-tag { display:block; }
+    .menu-header h2 { font-family:'Cormorant Garamond',serif; font-size:clamp(2.5rem,4vw,4rem); font-weight:300; color:var(--cream); letter-spacing:-.01em; }
+    .menu-header h2 em { font-style:italic; color:var(--gold); }
+    .menu-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.07); max-width:1100px; margin:0 auto; }
+    .menu-item { background:var(--espresso); padding:2.5rem 2rem; transition:background .4s; position:relative; overflow:hidden; }
+    .menu-item:hover { background:#4d3525; }
+    .menu-item::after { content:''; position:absolute; bottom:0; left:2rem; right:2rem; height:1px; background:rgba(200,169,110,.2); }
+    .menu-item-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.75rem; }
+    .menu-item-name { font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:400; color:var(--cream); letter-spacing:.02em; }
+    .menu-item-price { font-size:.72rem; letter-spacing:.12em; color:var(--gold); }
+    .menu-item-desc { font-size:.68rem; letter-spacing:.08em; line-height:1.8; color:rgba(245,240,232,.45); }
+    .menu-item-tag { display:inline-block; margin-top:1.2rem; font-size:.55rem; letter-spacing:.2em; text-transform:uppercase; border:1px solid rgba(200,169,110,.35); color:var(--gold); padding:.25rem .65rem; }
+
+    .experience { display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:300px 300px; }
+    .exp-card { background:var(--parchment); display:flex; align-items:flex-end; padding:2rem; position:relative; overflow:hidden; }
+    .exp-card-bg { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:8rem; transition:transform .5s ease; }
+    .exp-card:hover .exp-card-bg { transform:scale(1.08); }
+    .exp-card-content { position:relative; z-index:2; background:rgba(245,240,232,.92); padding:1rem 1.25rem; }
+    .exp-card-title { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:400; color:var(--ink); }
+    .exp-card-sub { font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--mocha); margin-top:.2rem; }
+    .exp-card:nth-child(1) { background:#e8dcc8; grid-row:1/2; }
+    .exp-card:nth-child(2) { background:var(--espresso); grid-row:1/3; }
+    .exp-card:nth-child(2) .exp-card-content { background:rgba(61,43,31,.9); }
+    .exp-card:nth-child(2) .exp-card-title { color:var(--cream); }
+    .exp-card:nth-child(2) .exp-card-sub { color:var(--gold); }
+    .exp-card:nth-child(3) { background:#c8b89a; grid-row:1/2; }
+    .exp-card:nth-child(4) { background:#d4bfa0; grid-row:2/3; }
+    .exp-card:nth-child(5) { background:#e0d2b8; grid-row:2/3; }
+
+    .visit { padding:8rem 4rem; display:grid; grid-template-columns:1fr 1fr; gap:6rem; align-items:center; max-width:1200px; margin:0 auto; }
+    .visit h2 { font-family:'Cormorant Garamond',serif; font-size:clamp(2.5rem,4vw,4.5rem); font-weight:300; line-height:1.05; color:var(--ink); margin-bottom:1.5rem; }
+    .visit h2 em { font-style:italic; color:var(--rust); }
+    .visit p { font-size:.78rem; letter-spacing:.08em; line-height:2.1; color:var(--mocha); margin-bottom:2.5rem; }
+    .hours-grid { display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--warm); }
+    .hours-item { padding:1.2rem 1.5rem; border-right:1px solid var(--warm); border-bottom:1px solid var(--warm); }
+    .hours-item:nth-child(even) { border-right:none; }
+    .hours-item:nth-last-child(-n+2) { border-bottom:none; }
+    .hours-day { font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); margin-bottom:.4rem; }
+    .hours-time { font-family:'Cormorant Garamond',serif; font-size:1.1rem; color:var(--espresso); }
+    .address-card { background:var(--parchment); border:1px solid var(--warm); padding:2.5rem; position:relative; }
+    .address-card::before { content:''; position:absolute; top:8px; left:8px; right:-8px; bottom:-8px; border:1px solid var(--warm); z-index:-1; }
+    .address-line { font-family:'Cormorant Garamond',serif; font-size:1.8rem; font-weight:300; color:var(--ink); line-height:1.3; margin-bottom:2rem; }
+    .address-details { display:flex; flex-direction:column; gap:.8rem; }
+    .addr-row { display:flex; align-items:center; gap:.9rem; font-size:.7rem; letter-spacing:.1em; color:var(--mocha); }
+
+    footer { background:var(--ink); color:var(--cream); padding:4rem; display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:4rem; position:relative; }
+    footer::before { content:''; position:absolute; top:0; left:4rem; right:4rem; height:1px; background:linear-gradient(to right,transparent,var(--gold),transparent); }
+    .footer-brand .logo { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:300; letter-spacing:.08em; color:var(--cream); display:block; margin-bottom:1rem; }
+    .footer-brand .logo span { font-style:italic; color:var(--gold); }
+    .footer-brand p { font-size:.7rem; letter-spacing:.1em; line-height:2; color:rgba(245,240,232,.45); max-width:260px; }
+    .footer-col h4 { font-size:.58rem; letter-spacing:.25em; text-transform:uppercase; color:var(--gold); margin-bottom:1.5rem; }
+    .footer-col ul { list-style:none; display:flex; flex-direction:column; gap:.75rem; }
+    .footer-col a { font-size:.72rem; letter-spacing:.1em; color:rgba(245,240,232,.55); text-decoration:none; transition:color .3s; }
+    .footer-col a:hover { color:var(--gold); }
+    .footer-bottom { background:var(--ink); border-top:1px solid rgba(255,255,255,.06); padding:1.5rem 4rem; display:flex; justify-content:space-between; align-items:center; }
+    .footer-bottom p { font-size:.6rem; letter-spacing:.15em; color:rgba(245,240,232,.3); }
+
+    @keyframes fadeLeft { from{opacity:0;transform:translateX(-28px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes fadeRight { from{opacity:0;transform:translateX(28px)} to{opacity:1;transform:translateX(0)} }
+    .reveal { opacity:0; transform:translateY(30px); transition:opacity .7s ease,transform .7s ease; }
+    .reveal.in { opacity:1; transform:none; }
+
+    @media (max-width:900px) {
+      nav { padding:1.5rem 2rem; }
+      .nav-links { display:none; }
+      .hero { grid-template-columns:1fr; }
+      .hero-left { padding:9rem 2rem 4rem; }
+      .hero-right { min-height:50vw; }
+      .story { grid-template-columns:1fr; }
+      .story-left { min-height:300px; }
+      .story-right { padding:3rem 2rem; }
+      .menu-grid { grid-template-columns:1fr; }
+      .experience { grid-template-columns:1fr 1fr; grid-template-rows:auto; }
+      .exp-card { grid-row:auto !important; }
+      .visit { grid-template-columns:1fr; gap:3rem; padding:5rem 2rem; }
+      footer { grid-template-columns:1fr; gap:2.5rem; padding:3rem 2rem; }
+      .footer-bottom { padding:1.5rem 2rem; flex-direction:column; gap:.5rem; text-align:center; }
+      .menu-section { padding:5rem 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <nav>
+    <a class="nav-logo" href="#">S<span>é</span>pia</a>
+    <ul class="nav-links">
+      <li><a href="#story">Our Story</a></li>
+      <li><a href="#menu">Menu</a></li>
+      <li><a href="#visit">Visit</a></li>
+      <li><a href="#visit">Reserve</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-left">
+      <div class="hero-label">Artisan · Since 2019 · Thimphu</div>
+      <h1>Where Every<br/>Cup Tells<br/><em>A Story</em></h1>
+      <p class="hero-desc">We source single-origin beans from the highlands of Bhutan and Nepal, roasted slowly to reveal the character of every terroir.</p>
+      <div class="hero-cta">
+        <a href="#menu" class="btn-filled">Explore Menu</a>
+        <a href="#story" class="btn-text">Our Story</a>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-art">
+        <svg viewBox="0 0 400 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="200" cy="340" rx="140" ry="22" fill="#C8A96E" opacity="0.25"/>
+          <ellipse cx="200" cy="335" rx="130" ry="18" stroke="#C8A96E" stroke-width="1.5" fill="none"/>
+          <path d="M100 180 L120 320 Q200 340 280 320 L300 180 Z" fill="#7C5C3E" opacity="0.18"/>
+          <path d="M100 180 L120 320 Q200 340 280 320 L300 180" stroke="#7C5C3E" stroke-width="2" fill="none"/>
+          <ellipse cx="200" cy="180" rx="100" ry="18" fill="#EDE5D4" stroke="#C8A96E" stroke-width="1.5"/>
+          <path d="M300 220 Q360 220 360 270 Q360 320 300 310" stroke="#7C5C3E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <ellipse cx="200" cy="180" rx="88" ry="15" fill="#7C5C3E" opacity="0.55"/>
+          <path d="M180 175 Q200 165 220 175" stroke="#D4C5A9" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+          <path d="M175 180 Q200 168 225 180" stroke="#D4C5A9" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+          <path d="M170 150 Q165 130 175 115 Q185 100 180 82" stroke="#C8A96E" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.45"/>
+          <path d="M200 145 Q195 122 205 106 Q215 88 210 70" stroke="#C8A96E" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.35"/>
+          <path d="M228 150 Q233 128 223 112 Q215 95 220 78" stroke="#C8A96E" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.45"/>
+          <circle cx="200" cy="260" r="120" stroke="#C8A96E" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.2"/>
+          <circle cx="200" cy="260" r="160" stroke="#C8A96E" stroke-width="0.5" stroke-dasharray="2 12" opacity="0.12"/>
+        </svg>
+      </div>
+      <div class="hero-year">2019</div>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee-strip">
+    <div class="marquee-inner">
+      <span>Single Origin</span><span class="sep">✦</span><span>Cold Brew</span><span class="sep">✦</span><span>Artisan Roast</span><span class="sep">✦</span><span>Pour Over</span><span class="sep">✦</span><span>Specialty Espresso</span><span class="sep">✦</span><span>Seasonal Blends</span><span class="sep">✦</span><span>Hand Crafted</span><span class="sep">✦</span><span>Bhutanese Terroir</span><span class="sep">✦</span>
+      <span>Single Origin</span><span class="sep">✦</span><span>Cold Brew</span><span class="sep">✦</span><span>Artisan Roast</span><span class="sep">✦</span><span>Pour Over</span><span class="sep">✦</span><span>Specialty Espresso</span><span class="sep">✦</span><span>Seasonal Blends</span><span class="sep">✦</span><span>Hand Crafted</span><span class="sep">✦</span><span>Bhutanese Terroir</span><span class="sep">✦</span>
+    </div>
+  </div>
+
+  <!-- STORY -->
+  <section class="story" id="story">
+    <div class="story-left">
+      <div class="story-pattern"></div>
+      <div class="story-circle">
+        <div class="story-num">100%</div>
+        <div class="story-num-label">Specialty Grade</div>
+        <div class="divider" style="margin:1.2rem auto;"></div>
+        <div class="story-num" style="font-size:2.2rem">6+</div>
+        <div class="story-num-label">Origin Countries</div>
+      </div>
+    </div>
+    <div class="story-right reveal">
+      <div class="section-tag">// Our Story</div>
+      <h2>Born from a <em>love</em><br/>of honest coffee</h2>
+      <div class="divider"></div>
+      <p>Sépia began in a small converted warehouse in Thimphu, driven by a single question: what does truly great coffee taste like when every decision is made with care?</p>
+      <p>We work directly with smallholder farms across Bhutan, Nepal, and Ethiopia — paying above fair-trade prices and visiting every harvest season. Our roasts are slow, our extractions deliberate, and our service unhurried.</p>
+      <div class="story-stats">
+        <div><div class="stat-num">12</div><div class="stat-label">Origin Farms</div></div>
+        <div><div class="stat-num">5</div><div class="stat-label">Years Roasting</div></div>
+        <div><div class="stat-num">40k</div><div class="stat-label">Cups Poured</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MENU -->
+  <section class="menu-section" id="menu">
+    <div class="menu-header reveal">
+      <span class="section-tag">// Signature Menu</span>
+      <h2>Crafted with <em>intention</em></h2>
+    </div>
+    <div class="menu-grid reveal">
+      <div class="menu-item">
+        <div class="menu-item-top"><div class="menu-item-name">Espresso</div><div class="menu-item-price">Nu. 120</div></div>
+        <div class="menu-item-desc">Double ristretto, bright acidity, dark chocolate finish. Bhutanese highland blend.</div>
+        <div class="menu-item-tag">House Classic</div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-item-top"><div class="menu-item-name">Sépia Latte</div><div class="menu-item-price">Nu. 180</div></div>
+        <div class="menu-item-desc">Signature espresso pulled long, textured oat milk, seasonal spice dust.</div>
+        <div class="menu-item-tag">Signature</div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-item-top"><div class="menu-item-name">Cold Brew</div><div class="menu-item-price">Nu. 200</div></div>
+        <div class="menu-item-desc">24-hour slow steep, Ethiopian Yirgacheffe. Low bitterness, intensely smooth.</div>
+        <div class="menu-item-tag">18h Cold Steep</div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-item-top"><div class="menu-item-name">Pour Over</div><div class="menu-item-price">Nu. 220</div></div>
+        <div class="menu-item-desc">Chemex or V60, single origin — ask your barista for today's offering.</div>
+        <div class="menu-item-tag">Rotating Origin</div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-item-top"><div class="menu-item-name">Butter Coffee</div><div class="menu-item-price">Nu. 160</div></div>
+        <div class="menu-item-desc">Traditional Bhutanese suja meets specialty espresso. Rich, warming, unforgettable.</div>
+        <div class="menu-item-tag">Local Fusion</div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-item-top"><div class="menu-item-name">Seasonal Blend</div><div class="menu-item-price">Nu. 190</div></div>
+        <div class="menu-item-desc">Ask your barista. Changes weekly. Always extraordinary.</div>
+        <div class="menu-item-tag">Chef's Special</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE CARDS -->
+  <div class="experience">
+    <div class="exp-card">
+      <div class="exp-card-bg">☕</div>
+      <div class="exp-card-content"><div class="exp-card-title">The Roastery</div><div class="exp-card-sub">Watch us roast, live</div></div>
+    </div>
+    <div class="exp-card">
+      <div class="exp-card-bg" style="font-size:10rem;opacity:.3">🌿</div>
+      <div class="exp-card-content"><div class="exp-card-title">Farm Sourcing</div><div class="exp-card-sub">Direct from origin</div></div>
+    </div>
+    <div class="exp-card">
+      <div class="exp-card-bg">🎨</div>
+      <div class="exp-card-content"><div class="exp-card-title">Latte Art</div><div class="exp-card-sub">Every cup, a canvas</div></div>
+    </div>
+    <div class="exp-card">
+      <div class="exp-card-bg">📚</div>
+      <div class="exp-card-content"><div class="exp-card-title">Brew Workshops</div><div class="exp-card-sub">Learn the craft</div></div>
+    </div>
+    <div class="exp-card">
+      <div class="exp-card-bg">🍞</div>
+      <div class="exp-card-content"><div class="exp-card-title">House Bakery</div><div class="exp-card-sub">Baked fresh daily</div></div>
+    </div>
+  </div>
+
+  <!-- VISIT -->
+  <section id="visit">
+    <div class="visit">
+      <div class="reveal">
+        <div class="section-tag">// Come Visit</div>
+        <h2>Find us in the<br/>heart of <em>Thimphu</em></h2>
+        <p>No reservations needed for café seating. For private cuppings, roastery tours, and workshops — book ahead.</p>
+        <div class="hours-grid">
+          <div class="hours-item"><div class="hours-day">Mon – Fri</div><div class="hours-time">7:00 – 19:00</div></div>
+          <div class="hours-item"><div class="hours-day">Saturday</div><div class="hours-time">8:00 – 20:00</div></div>
+          <div class="hours-item"><div class="hours-day">Sunday</div><div class="hours-time">9:00 – 18:00</div></div>
+          <div class="hours-item"><div class="hours-day">Holidays</div><div class="hours-time">10:00 – 17:00</div></div>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="address-card">
+          <span class="section-tag">// Location</span>
+          <div class="address-line">Norzin Lam,<br/>Thimphu, Bhutan</div>
+          <div class="address-details">
+            <div class="addr-row"><span>📞</span><span>+975 02 334 567</span></div>
+            <div class="addr-row"><span>✉️</span><span>hello@sepia.bt</span></div>
+            <div class="addr-row"><span>📍</span><span>Near Clock Tower, above the bookshop</span></div>
+          </div>
+          <div class="divider" style="margin-top:1.75rem;margin-bottom:1.5rem;"></div>
+          <a href="#" class="btn-filled" style="font-size:.62rem;letter-spacing:.2em;">Book a Cupping Session</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-brand">
+      <span class="logo">S<span>é</span>pia</span>
+      <p>Specialty coffee roasted with care. Serving Thimphu since 2019. Every cup, a quiet act of devotion.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Explore</h4>
+      <ul>
+        <li><a href="#story">Our Story</a></li>
+        <li><a href="#menu">Menu</a></li>
+        <li><a href="#visit">Visit</a></li>
+        <li><a href="#">Workshops</a></li>
+        <li><a href="#">Wholesale</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Connect</h4>
+      <ul>
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">Facebook</a></li>
+        <li><a href="#">Newsletter</a></li>
+        <li><a href="#">Press</a></li>
+      </ul>
+    </div>
+  </footer>
+  <div class="footer-bottom">
+    <p>© 2024 Sépia Artisan Coffee. All rights reserved.</p>
+    <p>Crafted with ♡ in Thimphu, Bhutan</p>
+  </div>
+
+  <script>
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    document.addEventListener('mousemove', e => {
+      cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px';
+      ring.style.left = e.clientX + 'px'; ring.style.top = e.clientY + 'px';
+    });
+    document.querySelectorAll('a,button').forEach(el => {
+      el.addEventListener('mouseenter', () => { cursor.style.width='16px'; cursor.style.height='16px'; ring.style.width='52px'; ring.style.height='52px'; });
+      el.addEventListener('mouseleave', () => { cursor.style.width='10px'; cursor.style.height='10px'; ring.style.width='38px'; ring.style.height='38px'; });
+    });
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach((e,i) => { if(e.isIntersecting) setTimeout(()=>e.target.classList.add('in'), i*100); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  </script>
+</body>
+</html>
